@@ -3,6 +3,8 @@ name = "antigravity-launcher-lite"
 version = "1.0.0"
 description = "进程级 Antigravity 代理启动器"
 license = "MIT"
+authors = ["Antigravity Launcher Lite contributors"]
+repository = "https://github.com/Alisonispig/antigravity-launcher-lite"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

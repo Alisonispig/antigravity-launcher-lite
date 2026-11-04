@@ -9,3 +9,6 @@ src-tauri/target/
 *.p12
 *.pfx
 *.key
+release-assets/
+__pycache__/
+src-tauri/notices/THIRD-PARTY-NOTICES.txt

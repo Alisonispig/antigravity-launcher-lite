@@ -35,6 +35,36 @@
     ],
     "macOS": {
       "minimumSystemVersion": "11.0"
+    },
+    "publisher": "Antigravity Launcher Lite contributors",
+    "category": "DeveloperTool",
+    "shortDescription": "Process-scoped proxy launcher for Antigravity",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
+        "displayLanguageSelector": true
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0",
+          "libayatana-appindicator3-1"
+        ]
+      }
+    },
+    "resources": {
+      "../LICENSE": "LICENSE.txt",
+      "notices/": "licenses/"
     }
   }
 }
