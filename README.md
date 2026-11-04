@@ -40,20 +40,20 @@ Antigravity Launcher Lite 是一个独立的 Antigravity 代理启动工具。�
 
 ## 下载与平台支持
 
-下载入口：[1.0.0 预览版](https://github.com/Alisonispig/antigravity-launcher-lite/releases/tag/v1.0.0)。
+下载入口：[1.0.0 正式版](https://github.com/Alisonispig/antigravity-launcher-lite/releases/tag/v1.0.0)。
 
-**1.0.0 以预览版提供。** 按下面的系统和架构选择安装包；如需自行修改或构建，也可以使用下方的源码运行方式。
+**1.0.0 已正式发布，多个平台的使用测试已由维护者确认通过。** 按下面的系统和架构选择安装包；如需自行修改或构建，也可以使用下方的源码运行方式。
 
 | 平台 | 下载文件 | 验证范围 |
 | --- | --- | --- |
 | macOS · Apple Silicon | `macos-arm64.dmg` / `macos-arm64.app.zip` | CI 原生打包与启动检查，并在本机打开安装包验证窗口与配置恢复 |
-| macOS · Intel | `macos-x64.dmg` / `macos-x64.app.zip` | CI 原生打包与启动检查；真实用户设备待验收 |
-| Windows · x64 | `windows-x64-setup.exe` | CI 安装与启动检查；真实用户设备待验收 |
-| Linux · x86_64 | `linux-x64.deb` / `linux-x64.AppImage` | CI 包结构与启动检查；真实用户设备待验收 |
+| macOS · Intel | `macos-x64.dmg` / `macos-x64.app.zip` | CI 原生打包与启动检查；维护者确认设备测试通过 |
+| Windows · x64 | `windows-x64-setup.exe` | CI 安装与启动检查；维护者确认设备测试通过 |
+| Linux · x86_64 | `linux-x64.deb` / `linux-x64.AppImage` | CI 包结构与启动检查；维护者确认设备测试通过 |
 
 文件名均带有 `Antigravity-Launcher-Lite_1.0.0_` 前缀。Mac 打开 DMG 后将应用拖入 Applications；Windows 运行安装器，默认安装到当前用户；Linux 按发行版选择 deb 或 AppImage。
 
-macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Windows 未做代码签名。系统可能出现安全提示，具体依赖、签名状态、校验值与预览限制见发布说明。CI 启动检查不等于真实设备上的完整使用验收。
+macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Windows 未做代码签名。系统可能出现安全提示，具体依赖、签名状态、校验值与使用限制见发布说明。CI 启动检查不等于真实设备上的完整使用验收。
 
 ## 使用方法
 
