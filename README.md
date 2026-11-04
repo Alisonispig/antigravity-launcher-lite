@@ -40,18 +40,20 @@ Antigravity Launcher Lite 是一个独立的 Antigravity 代理启动工具。�
 
 ## 下载与平台支持
 
-下载入口：[GitHub Releases](https://github.com/Alisonispig/antigravity-launcher-lite/releases)。
+下载入口：[1.0.0 预览版](https://github.com/Alisonispig/antigravity-launcher-lite/releases/tag/v1.0.0)。
 
-**当前项目版本为 1.0.0，尚未发布正式安装包。** 如需现在使用，请按下方说明从源码构建。
+**1.0.0 以预览版提供。** 按下面的系统和架构选择安装包；如需自行修改或构建，也可以使用下方的源码运行方式。
 
-| 平台 | 当前情况 |
-| --- | --- |
-| macOS · Apple Silicon | 已在本机完成构建与界面、配置保存、窗口关闭及恢复等流程验证 |
-| macOS · Intel | 目标支持，尚未完成运行验收 |
-| Windows · x64 | 已提供平台适配代码和 CI 验证配置，尚未完成真实安装与运行验收 |
-| Linux · x86_64 | 已提供平台适配代码和 CI 验证配置，尚未完成真实安装与运行验收 |
+| 平台 | 下载文件 | 验证范围 |
+| --- | --- | --- |
+| macOS · Apple Silicon | `macos-arm64.dmg` / `macos-arm64.app.zip` | CI 原生打包与启动检查，并在本机打开安装包验证窗口与配置恢复 |
+| macOS · Intel | `macos-x64.dmg` / `macos-x64.app.zip` | CI 原生打包与启动检查；真实用户设备待验收 |
+| Windows · x64 | `windows-x64-setup.exe` | CI 安装与启动检查；真实用户设备待验收 |
+| Linux · x86_64 | `linux-x64.deb` / `linux-x64.AppImage` | CI 包结构与启动检查；真实用户设备待验收 |
 
-编译通过不等于在真实设备上验证通过。安装包、支持的系统版本和签名情况，请以各版本发布说明为准。当前 macOS 本地构建产物未完成 Developer ID 签名与苹果公证。
+文件名均带有 `Antigravity-Launcher-Lite_1.0.0_` 前缀。Mac 打开 DMG 后将应用拖入 Applications；Windows 运行安装器，默认安装到当前用户；Linux 按发行版选择 deb 或 AppImage。
+
+macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Windows 未做代码签名。系统可能出现安全提示，具体依赖、签名状态、校验值与预览限制见发布说明。CI 启动检查不等于真实设备上的完整使用验收。
 
 ## 使用方法
 

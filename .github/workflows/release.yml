@@ -108,7 +108,7 @@ jobs:
           test -f "$notes"
           if gh release view "$tag" --json isDraft >/dev/null 2>&1; then
             test "$(gh release view "$tag" --json isDraft --jq .isDraft)" = true
-            test "$(gh api "repos/$GH_REPO/commits/$tag" --jq .sha)" = "$GITHUB_SHA"
+            test "$(gh release view "$tag" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
           else
             gh release create "$tag" --target "$GITHUB_SHA" --draft --prerelease --title "$RELEASE_VERSION 预览版" --notes-file "$notes"
           fi

@@ -1,8 +1,8 @@
 # 打包、签名与发布
 
-## 发布矩阵
+## 1.0.0 预览版发布矩阵
 
-| 平台 | 首版架构 | 计划产物 | 用户侧要求 |
+| 平台 | 发布架构 | 已发布产物 | 用户侧要求 |
 | --- | --- | --- | --- |
 | Windows | x64 | NSIS setup.exe，优先按用户安装 | Microsoft WebView2；安装器检测并按需引导安装 |
 | macOS | Apple Silicon arm64、Intel x64 | 分架构 DMG，附 .app 压缩包 | 系统 WKWebView；根据 Tauri/依赖核实最低系统版本 |
@@ -24,11 +24,11 @@ Windows ARM64 与 Linux ARM64 为后续任务，不因提供源码就宣称二�
 
 Windows 未签名包可能触发 SmartScreen；Windows Authenticode 签名另行评估，不与苹果会员混淆。Linux 提供 SHA-256 校验值，后续按分发渠道评估签名。
 
-## GitHub Actions 计划
+## GitHub Actions 验证与打包
 
 验证任务运行前端类型检查/构建、cargo fmt、clippy 与必要测试。macOS、Windows、Linux 分别在对应 runner 原生构建。使用固定工具链策略，锁文件提交，第三方 Action 在实施时固定到可审计版本/commit。macOS 两架构分别构建；跨架构构建结果不等于在真实硬件验证运行。
 
-tag 触发构建后先创建 Draft Release，附版本说明、架构、产物校验值、签名/公证状态、最低 OS 及已测试系统。完成安装烟测后再公开。初版不实现应用内自动安装更新；若以后加入 updater，其更新签名密钥与系统代码签名证书分别管理。
+通过 workflow_dispatch 指定版本触发打包，产物检查与 CI 安装/启动观察全部通过后，先创建 Draft Release，附版本说明、架构、产物校验值、签名/公证状态、构建环境及已测试系统。维护者下载核对后再公开；发布标签关联实际构建提交。初版不实现应用内自动安装更新；若以后加入 updater，其更新签名密钥与系统代码签名证书分别管理。
 
 不得把证书、密码或私钥提交到仓库。没有证书时允许清晰标注的构建流程，不伪装成功公证。
 
@@ -45,3 +45,19 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk npm run tauri bu
 ```
 
 这是本机环境记录，不是通用安装步骤；其他机器应按实际 SDK 与工具链处理，不应照抄不存在的路径。若 Rust 未加入 PATH，可先执行 `. "$HOME/.cargo/env"`。
+
+## 安装包流水线操作
+
+维护者通过 `打包发布` 工作流手动选择 main 与版本号：
+
+```sh
+gh workflow run release.yml --ref main -f version=1.0.0
+```
+
+工作流在 macOS 15（arm64）、macOS 15 Intel、Windows Server 2022、Ubuntu 22.04 上分别构建原生安装包。各目标先运行核心测试，收集第三方依赖许可，再生成 DMG/应用 ZIP、当前用户 NSIS、deb/AppImage。生成的许可文件随包附带，Windows Python 显式使用 UTF-8 读取 Cargo 元数据。
+
+每个构建检查二进制架构、版本与安装包结构，并在 CI 临时目录执行安装/启动观察。脚本只结束其自己创建的测试进程。四个目标全部成功后，汇总同一构建提交的产物、SHA-256 和 BUILD-METADATA，再创建预览版 Draft Release；工作流不会自动公开。公开发布前还需下载核对哈希、检查 Mac 实际窗口并更新发布说明。
+
+CI 中的短时进程观察不等于用户真实设备上的完整安装验收；缺少设备验收的平台始终标注预览。macOS 为 adhoc 本地签名，无 Developer ID 与苹果公证；Windows 未做 Authenticode 签名。
+
+1.0.0 预览版已按上述流程公开，构建与校验记录见 `04-roadmap.md`。GitHub Release 中的构建元数据是各文件对应提交和 SHA-256 的依据；主分支后续文档维护不改变已发布安装包对应的源码标签。

@@ -38,10 +38,10 @@
 
 ## M4：首个公开版本
 
-- [ ] 生成 Windows x64、macOS arm64/x64、Linux x86_64 发布产物及 SHA-256。
-- [ ] 补齐安装说明、签名状态、最低 OS、常见错误、许可证及来源说明。
+- [x] 生成 Windows x64、macOS arm64/x64、Linux x86_64 发布产物及 SHA-256。
+- [x] 补齐预览版安装说明、签名状态、构建基线、常见错误、许可证及来源说明。
 - [x] 经用户授权创建公开 GitHub 仓库并推送 main 源码。
-- [ ] 发布先 Draft Release，安装烟测后再公开。
+- [x] 发布先 Draft Release，CI 安装/启动烟测与本机 Mac 检查后公开 1.0.0 预览版，未验收平台已明确标注。
 - [ ] 用干净环境验证 Windows WebView2、macOS Gatekeeper 提示和 Linux 依赖行为。
 
 ## 可交付定义
@@ -110,6 +110,20 @@ README 重写为面向使用者的项目首页，补充项目用途、已实现�
 
 ## 1.0.0 安装包与发布准备（2026-11-04）
 
-已检查现有三次 Actions，全部成功，无已有失败日志。新增四架构原生安装包流水线：macOS arm64/x64 DMG 与应用 ZIP、Windows x64 当前用户 NSIS 安装包、Linux x64 deb/AppImage；构建后检查架构和包结构、执行隔离的安装/启动观察，再合并 SHA-256 与构建元数据并创建预览版 Release 草稿。正式公开前检查产物；无真实设备验收的平台明确标为预览，签名与运行环境限制写入发布说明。流程正在验证，尚未发布。
+已检查现有三次 Actions，全部成功，无已有失败日志。新增四架构原生安装包流水线：macOS arm64/x64 DMG 与应用 ZIP、Windows x64 当前用户 NSIS 安装包、Linux x64 deb/AppImage；构建后检查架构和包结构、执行隔离的安装/启动观察，再合并 SHA-256 与构建元数据并创建预览版 Release 草稿。正式公开前检查产物；无真实设备验收的平台明确标为预览，签名与运行环境限制写入发布说明。后续验证与发布结果见本文件末尾。
 
 首次安装包流水线验证：Apple Silicon Mac 与 Linux 的安装包结构/启动烟测通过；Windows 在依赖声明脚本中因系统默认 CP1252 解码 UTF-8 Cargo 元数据失败。修复为显式 UTF-8 解码，并为打包步骤设置 PYTHONUTF8=1；将从同一修复提交重新生成各平台产物，避免混合不同提交的发布文件。
+
+## 1.0.0 预览版已发布（2026-11-04）
+
+- Release：https://github.com/Alisonispig/antigravity-launcher-lite/releases/tag/v1.0.0 。先创建草稿，完成下载校验后公开；保持 prerelease 标记。
+- 实际构建提交：`c809ae9a42a74ddc37af770074f8a56f372c25dc`。常规验证与安装包运行 `41771524168` 全部成功，包括四个原生打包任务及草稿任务。
+- 已发布 7 个安装包/应用 ZIP：Mac arm64/x64 各 DMG 与 `.app.zip`、Windows x64 当前用户 NSIS、Linux x64 deb 与 AppImage；另附 `BUILD-METADATA.json` 和 `SHA256SUMS.txt`，共 9 个附件。
+- Windows 实际修复：依赖声明脚本显式按 UTF-8 解码 Cargo 元数据，并设置 PYTHONUTF8=1。重跑后安装器安装与应用启动观察通过。
+- Mac 两架构已通过签名完整性、版本和架构检查、DMG 挂载、复制后启动观察。Linux 两种包和 Windows 安装包也通过 CI 中的结构与启动检查。CI 只结束自身创建的测试进程，不操作用户的 Antigravity。
+- Apple Silicon Mac 从 CI DMG 复制到本机后打开，窗口、配置恢复与路径检查正常；最终 ZIP 的应用签名检查通过，可执行文件哈希与本机测试的 DMG 程序一致。
+- 所有下载文件与清单、GitHub 资产 SHA-256 核对一致；发布为预览支持，不将 CI 观察等同于真实设备完整验收。Mac 无 Developer ID/公证，Windows 无 Authenticode 签名，限制已写入发布说明。
+- 打包前核对依赖许可声明，并为安装包生成第三方版本、许可、源码位置及可用许可文本。项目许可证与生成的声明已包含在 Mac 安装包资源中，其他平台由同一资源配置随包分发。
+- README 已补上安装包下载与平台选择。发布工作流同时修正草稿重跑的提交校验：草稿未公开时标签可能尚未生成，应检查 targetCommitish，而不依赖已存在的 Git 标签。
+
+仍待完成：真实 Intel Mac/Windows/Linux 设备上的完整使用验收、最低系统版本与无 WebView2/受 Gatekeeper 隔离等干净环境烟测，以及 M1/M2 未完成的功能；不因版本号 1.0.0 预先勾选。
