@@ -8,7 +8,7 @@
 - [ ] 发布前固定并验证三平台最低系统要求。
 - [x] 使用原生窗口标题栏，完成首页、设置、帮助、会话诊断及中英文本结构。
 - [x] 配置最小 capabilities、CSP、开发命令和三平台 CI 工作流。
-- [ ] 实际运行 Windows/macOS/Linux CI（尚未推送）。
+- [ ] Windows/macOS/Linux CI 全部通过（首次推送已触发，结果待确认）。
 - [x] 本机启动桌面窗口，前端构建及 Rust 检查通过；浏览器中禁用 IPC 操作，不伪装探测结果。
 
 ## M1：核心流程纵向打通
@@ -40,7 +40,8 @@
 
 - [ ] 生成 Windows x64、macOS arm64/x64、Linux x86_64 发布产物及 SHA-256。
 - [ ] 补齐安装说明、签名状态、最低 OS、常见错误、许可证及来源说明。
-- [ ] 在明确授权后创建远端仓库、推送和发布；先 Draft Release，烟测后公开。
+- [x] 经用户授权创建公开 GitHub 仓库并推送 main 源码。
+- [ ] 发布先 Draft Release，安装烟测后再公开。
 - [ ] 用干净环境验证 Windows WebView2、macOS Gatekeeper 提示和 Linux 依赖行为。
 
 ## 可交付定义
@@ -101,4 +102,4 @@
 
 ## GitHub 源码仓库（2026-11-04）
 
-用户已授权创建仓库及上传项目。公开仓库已创建：https://github.com/Alisonispig/antigravity-launcher-lite 。本地 main 已建立首次提交，origin 使用 HTTPS；首次推送待 GitHub CLI 登录授权后执行。仅上传源码、图标和规划文档，node_modules、dist、target、日志及本机配置不上传。本次不创建 tag 或 Release，不代表三平台验收完成。
+用户已授权创建仓库及上传项目。公开仓库已创建：https://github.com/Alisonispig/antigravity-launcher-lite 。本地 main 已建立首次提交，origin 使用 HTTPS；GitHub CLI 登录完成，main 已成功推送并设置上游分支。首次推送触发三平台验证工作流，运行结果单独记录，不提前标为通过。仅上传源码、图标和规划文档，node_modules、dist、target、日志及本机配置不上传。本次不创建 tag 或 Release，不代表三平台验收完成。
