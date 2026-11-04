@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-probe-proxy"
+description = "Enables the probe_proxy command without any pre-configured scope."
+commands.allow = ["probe_proxy"]
+
+[[permission]]
+identifier = "deny-probe-proxy"
+description = "Denies the probe_proxy command without any pre-configured scope."
+commands.deny = ["probe_proxy"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-validate-app"
+description = "Enables the validate_app command without any pre-configured scope."
+commands.allow = ["validate_app"]
+
+[[permission]]
+identifier = "deny-validate-app"
+description = "Denies the validate_app command without any pre-configured scope."
+commands.deny = ["validate_app"]
