@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", required=True)
     args = parser.parse_args()
-    result = subprocess.run(["cargo", "metadata", "--locked", "--format-version", "1", "--manifest-path", str(ROOT / "src-tauri/Cargo.toml"), "--filter-platform", args.target], capture_output=True, text=True, check=True)
+    result = subprocess.run(["cargo", "metadata", "--locked", "--format-version", "1", "--manifest-path", str(ROOT / "src-tauri/Cargo.toml"), "--filter-platform", args.target], capture_output=True, text=True, encoding="utf-8", check=True)
     metadata = json.loads(result.stdout)
     ids = {node["id"] for node in metadata["resolve"]["nodes"]}
     text = ["Antigravity Launcher Lite — 第三方依赖声明", "项目许可证见安装目录内的 LICENSE.txt。", "以下列出目标平台构建图中的依赖（含构建依赖）；源码可按包名和版本从对应上游获取。", ""]
