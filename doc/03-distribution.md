@@ -35,3 +35,13 @@ tag 触发构建后先创建 Draft Release，附版本说明、架构、产物�
 ## 开源合规
 
 本项目采用 MIT。参考两个项目的设计，不将“公开源码”默认等同于可无条件复制；移植代码时核实实际文件的许可证与版权，并保留声明，新增 THIRD_PARTY_NOTICES。发布前审核依赖许可证与应用品牌，不使用 Google 官方应用图标或暗示官方出品，不打包 Antigravity 本体。
+
+## 开发环境排障记录
+
+2026-11-04 本机 macOS 默认 27 SDK 与链接器不兼容，开发验证通过为单次命令指定已有的 15.4 SDK 解决：
+
+```sh
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk npm run tauri build
+```
+
+这是本机环境记录，不是通用安装步骤；其他机器应按实际 SDK 与工具链处理，不应照抄不存在的路径。若 Rust 未加入 PATH，可先执行 `. "$HOME/.cargo/env"`。
