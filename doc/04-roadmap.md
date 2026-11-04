@@ -98,3 +98,7 @@
 底部文案调整（2026-11-04）：移除“关闭窗口后仍在菜单栏运行”提示，改为中英双语非官方应用声明，保留右侧配置保存反馈。前端构建、Rust 编译及 macOS `.app` 打包通过；纯文案修改不另加测试。
 
 版本显示（2026-11-04）：应用版本统一设为 1.0.0（npm、Tauri、Cargo 和锁文件同步），底部显示 v1.0.0，界面版本读取 package.json，保留非官方声明与保存反馈。前端构建、Rust 编译及 macOS `.app` 打包通过。版本号调整不代表三平台验收或公开发布已完成。
+
+## GitHub 源码仓库（2026-11-04）
+
+用户已授权创建仓库及上传项目。公开仓库已创建：https://github.com/Alisonispig/antigravity-launcher-lite 。本地 main 已建立首次提交，origin 使用 HTTPS；首次推送待 GitHub CLI 登录授权后执行。仅上传源码、图标和规划文档，node_modules、dist、target、日志及本机配置不上传。本次不创建 tag 或 Release，不代表三平台验收完成。

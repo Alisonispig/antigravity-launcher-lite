@@ -2,6 +2,8 @@
 
 基于 Tauri 2 的开源 Antigravity 代理启动器，计划支持 Windows、macOS、Linux。
 
+源码仓库：[Alisonispig/antigravity-launcher-lite](https://github.com/Alisonispig/antigravity-launcher-lite)。
+
 通过图形界面识别客户端、检测已有代理，并以进程级代理配置启动 Antigravity。无需 TUN，不修改系统全局代理，不捆绑代理内核或 Antigravity 本体。
 
 ## 当前状态
