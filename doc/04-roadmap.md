@@ -154,3 +154,5 @@ Windows WM_CLOSE 与 Linux X11 适配代码在独立最小工程中通过 API �
 用户授权提交 GitHub、检查各端构建后发布正式 1.0.1，并设为 Latest。npm/Tauri/Cargo 及锁文件版本统一为 1.0.1，补齐发布说明与 README 使用入口。沿用四架构打包、先草稿后核对产物再公开的流程；不覆盖 v1.0.0 的标签或安装包。实际 CI 与发布结果在完成后补充。
 
 发布前代码核对发现 Windows 的进程路径可能缺少 canonicalize 产生的长路径前缀，直接比较会漏认实例。现对观察到的 Windows 路径通过文件系统归一化，用于旧实例判断与更新跟踪，并增加 Windows 专用路径测试；对应 CI 结果后补。
+
+1.0.1 首轮验证中，GitHub 在执行代码前取消 macOS 14 任务，注解为 `The configuration macos-14-arm64-us-default is not supported`。验证矩阵已迁移到可用的 macOS 15；取消旧提交的流水线，修复提交后统一重跑常规验证与四架构打包，避免混合提交产物。
