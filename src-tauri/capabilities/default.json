@@ -11,6 +11,8 @@
     "allow-launch-antigravity",
     "allow-load-config",
     "allow-save-config",
-    "allow-set-window-theme"
+    "allow-set-window-theme",
+    "allow-recovery-status",
+    "allow-set-auto-restore-proxy"
   ]
 }

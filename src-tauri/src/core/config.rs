@@ -32,6 +32,8 @@ pub struct AppConfig {
     pub proxy_port: u16,
     pub language: Option<Language>,
     pub theme: Theme,
+    #[serde(default)]
+    pub auto_restore_proxy: bool,
 }
 impl Default for AppConfig {
     fn default() -> Self {
@@ -46,6 +48,7 @@ impl Default for AppConfig {
             proxy_port: 7890,
             language: None,
             theme: Theme::Light,
+            auto_restore_proxy: false,
         }
     }
 }
@@ -207,6 +210,19 @@ mod tests {
             );
         }
         assert_eq!(fs::read_dir(path.parent().unwrap()).unwrap().count(), 1);
+    }
+    #[test]
+    fn old_config_defaults_recovery_off_and_switch_survives_restart() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut value = serde_json::to_value(AppConfig::default()).unwrap();
+        value.as_object_mut().unwrap().remove("autoRestoreProxy");
+        fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+        let mut config = load(&path).unwrap().config;
+        assert!(!config.auto_restore_proxy);
+        config.auto_restore_proxy = true;
+        save(&path, &config).unwrap();
+        assert!(load(&path).unwrap().config.auto_restore_proxy);
     }
     #[test]
     fn corrupt_config_is_preserved_and_recovered() {

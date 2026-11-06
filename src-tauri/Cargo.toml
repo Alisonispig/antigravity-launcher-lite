@@ -1,6 +1,6 @@
 [package]
 name = "antigravity-launcher-lite"
-version = "1.0.0"
+version = "1.0.1"
 description = "进程级 Antigravity 代理启动器"
 license = "MIT"
 authors = ["Antigravity Launcher Lite contributors"]
@@ -26,6 +26,7 @@ tokio = { version = "1", features = ["net", "io-util", "time", "sync", "rt-multi
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 plist = "1"
 sysinfo = "0.33"
+sha2 = "0.10.9"
 
 serde_json = "1"
 tempfile = "3"
@@ -38,3 +39,12 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSRunningApplication", "libc"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+x11rb = { version = "0.13.2", default-features = false }

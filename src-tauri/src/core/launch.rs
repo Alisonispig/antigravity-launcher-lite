@@ -47,11 +47,10 @@ pub fn ensure_not_running(app: &AppCandidate) -> Result<()> {
         true,
         ProcessRefreshKind::nothing().with_exe(UpdateKind::Always),
     );
-    if system
-        .processes()
-        .values()
-        .any(|p| p.exe().is_some_and(|p| p == app.executable))
-    {
+    if system.processes().values().any(|p| {
+        p.exe()
+            .is_some_and(|p| crate::platform::same_executable(p, &app.executable))
+    }) {
         return Err(error("ALREADY_RUNNING", "launch"));
     }
     Ok(())

@@ -1,12 +1,27 @@
+pub mod recovery;
 use crate::core::{Result, error};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppCandidate {
     pub path: PathBuf,
     pub executable: PathBuf,
+}
+/// Windows 进程路径可能没有 canonicalize 产生的 \?\ 前缀，先通过文件系统归一化。
+pub fn same_executable(observed: &Path, expected: &Path) -> bool {
+    if observed == expected {
+        return true;
+    }
+    #[cfg(target_os = "windows")]
+    {
+        observed.canonicalize().is_ok_and(|path| path == expected)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
 }
 pub fn validate(path: &str) -> Result<AppCandidate> {
     if path.is_empty() || path.len() > 4096 {
@@ -99,6 +114,19 @@ fn resolve(path: &Path) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn normalizes_windows_process_path_prefix() {
+        let dir = tempfile::tempdir().unwrap();
+        let plain = dir.path().join("Antigravity.exe");
+        std::fs::write(&plain, b"fixture").unwrap();
+        let canonical = plain.canonicalize().unwrap();
+        assert!(same_executable(&plain, &canonical));
+        assert!(!same_executable(
+            &dir.path().join("different.exe"),
+            &canonical
+        ));
+    }
     #[test]
     fn rejects_relative_and_missing_paths() {
         assert_eq!(

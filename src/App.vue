@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { version as appVersion } from '../package.json';
 
@@ -10,6 +10,59 @@ const path = ref(navigator.userAgent.includes('Mac') ? '/Applications/Antigravit
 const host = ref('127.0.0.1');
 const port = ref(7890);
 const busy = ref(false);
+const autoRestoreProxy = ref(false);
+const changingRestore = ref(false);
+const recovery = ref<{enabled: boolean; supported: boolean; phase: string; code: string | null; revision: number}>();
+let recoveryTimer: ReturnType<typeof setInterval> | undefined;
+let pollingRecovery = false;
+let observedRecoveryRevision = -1;
+const recoveryText = computed(() => {
+ const phase = recovery.value?.phase;
+ if (!autoRestoreProxy.value) return '';
+ switch (phase) {
+  case 'unsupported': return t('当前桌面环境不支持自动恢复。', 'Automatic recovery is unavailable on this desktop.');
+  case 'watching': return t('已开启更新后恢复', 'Update recovery is on');
+  case 'waiting': return t('正在确认客户端重启…', 'Checking the client restart…');
+  case 'recovering': return t('更新已完成，正在检测代理…', 'Update detected. Checking the proxy…');
+  case 'quitting': return t('等待客户端退出；如有保存提示，请先处理。', 'Waiting for the client to quit. Respond to any save prompt.');
+  case 'restored': return t('更新后已使用原代理重新打开。', 'Reopened after the update with the original proxy.');
+  case 'failed': return recovery.value?.code === 'QUIT_NOT_COMPLETED' || recovery.value?.code === 'QUIT_REQUEST_FAILED'
+   ? t('客户端未退出，请正常退出后用启动器打开。', 'The client did not quit. Quit it normally, then launch it here.')
+   : t('自动恢复未完成，请检查代理并重新启动。', 'Recovery could not finish. Check the proxy and launch again.');
+  case 'stopped': return t('客户端已退出，下次启动后继续监测。', 'The client has exited. Monitoring resumes on the next launch.');
+  default: return t('下次通过启动器打开客户端后生效', 'Applies after launching the client here');
+ }
+});
+async function pollRecovery() {
+ if (pollingRecovery) return;
+ pollingRecovery = true;
+ try {
+  const status = await invoke<NonNullable<typeof recovery.value>>('recovery_status');
+  recovery.value = status;
+  if (status.revision !== observedRecoveryRevision) {
+   observedRecoveryRevision = status.revision;
+   if (['quitting', 'restored', 'failed'].includes(status.phase)) {
+    record(recoveryText.value);
+    success.value = status.phase === 'restored';
+   }
+  }
+ } catch { /* 保留上次状态；不把临时 IPC 错误写成客户端退出。 */ }
+ finally { pollingRecovery = false; }
+}
+async function toggleRestore(event: Event) {
+ const enabled = (event.target as HTMLInputElement).checked;
+ changingRestore.value = true;
+ try {
+  await invoke('set_auto_restore_proxy', {enabled});
+  autoRestoreProxy.value = enabled;
+  await pollRecovery();
+ } catch {
+  (event.target as HTMLInputElement).checked = autoRestoreProxy.value;
+  success.value = false;
+  record(t('设置未保存，请重试。', 'Could not save the setting. Please retry.'));
+ } finally { changingRestore.value = false; }
+}
+onUnmounted(() => { if (recoveryTimer) clearInterval(recoveryTimer); });
 const message = ref('');
 const success = ref(false);
 const logs = ref<{time: string; text: string}[]>([]);
@@ -26,7 +79,7 @@ const saveState = ref<'idle' | 'saving' | 'saved' | 'failed' | 'invalid' | 'reco
 let saveRevision = 0;
 interface AppConfig {
  schemaVersion: number; clientPath: string; proxyHost: string; proxyPort: number;
- language: 'zh' | 'en' | null; theme: 'system' | 'light' | 'dark';
+ language: 'zh' | 'en' | null; theme: 'system' | 'light' | 'dark'; autoRestoreProxy: boolean;
 }
 const saveLabel = computed(() => {
  switch (saveState.value) {
@@ -51,7 +104,7 @@ async function saveSettings() {
  }
  const config: AppConfig = {
   schemaVersion: 1, clientPath: path.value, proxyHost: host.value, proxyPort: port.value,
-  language: language.value, theme: theme.value as AppConfig['theme'],
+  language: language.value, theme: theme.value as AppConfig['theme'], autoRestoreProxy: autoRestoreProxy.value,
  };
  saveState.value = 'saving';
  try {
@@ -74,11 +127,16 @@ onMounted(async () => {
   port.value = loaded.config.proxyPort;
   if (loaded.config.language) language.value = loaded.config.language;
   theme.value = loaded.config.theme;
+  autoRestoreProxy.value = loaded.config.autoRestoreProxy;
   writableConfig.value = true;
   saveState.value = loaded.recovered ? 'recovered' : 'idle';
  } catch (error: unknown) {
   saveState.value = errorCode(error) === 'CONFIG_VERSION_UNSUPPORTED' ? 'future' : 'readError';
- } finally { loadingConfig.value = false; void syncWindowTheme(); }
+ } finally {
+  loadingConfig.value = false; void syncWindowTheme();
+  await pollRecovery();
+  recoveryTimer = setInterval(() => { void pollRecovery(); }, 2000);
+ }
 });
 watch([path, host, port, language, theme], () => { void saveSettings(); }, {flush: 'sync'});
 async function syncWindowTheme() {
@@ -161,7 +219,7 @@ async function run(action: 'validate' | 'probe' | 'launch') {
       <p class="hint">{{ t('填入代理软件中的 HTTP 或混合端口，无需开启系统代理。', 'Enter the HTTP or mixed port from your proxy app. System proxy is not required.') }}</p>
      </section>
     </fieldset>
-    <div class="launch-row"><span>{{ t('仅对本次启动的客户端生效', 'Applies to the client you launch') }}</span><button class="primary" :disabled="!canRun || !path" @click="run('launch')">{{ busy ? t('处理中…', 'Working…') : t('检测并启动', 'Check & launch') }}</button></div>
+    <div class="launch-row"><span>{{ recoveryText || t('仅对本次启动的客户端生效', 'Applies to the client you launch') }}</span><button class="primary" :disabled="!canRun || !path" @click="run('launch')">{{ busy ? t('处理中…', 'Working…') : t('检测并启动', 'Check & launch') }}</button></div>
     <div class="status" role="status" :class="{success, error: !!message && !success && !busy}"><span v-if="busy" class="spinner"></span><p>{{ message || t('填写路径与代理后，点击“检测并启动”。', 'Enter the client path and proxy, then choose Check & launch.') }}</p></div>
    </div>
    <div v-else-if="active === 'history'" class="page history">
@@ -173,6 +231,7 @@ async function run(action: 'validate' | 'probe' | 'launch') {
    <div v-else-if="active === 'settings'" class="page settings">
     <h1>{{ t('设置', 'Settings') }}</h1>
     <section class="card preferences"><div><label for="lang">{{ t('语言', 'Language') }}</label><select id="lang" v-model="language" :disabled="loadingConfig"><option value="zh">简体中文</option><option value="en">English</option></select></div><div><label for="theme">{{ t('外观', 'Appearance') }}</label><select id="theme" v-model="theme" :disabled="loadingConfig"><option value="system">{{ t('跟随系统', 'System') }}</option><option value="light">{{ t('浅色', 'Light') }}</option><option value="dark">{{ t('深色', 'Dark') }}</option></select></div></section>
+    <section class="card recovery-card"><label class="switch-row"><span>{{ t('更新后自动恢复代理', 'Restore proxy after client updates') }}</span><input type="checkbox" :checked="autoRestoreProxy" :disabled="loadingConfig || changingRestore || !writableConfig || (recovery?.supported === false && !autoRestoreProxy)" @change="toggleRestore" /></label><p>{{ t('仅跟踪由启动器打开的客户端。更新重启后请求正常退出，再用本次启动时的代理打开；如有保存提示，请先处理。不会强制结束进程。', 'Tracks clients launched here. After an update restarts the client, requests a normal quit and reopens it with the same proxy. Respond to save prompts; the app is never force-quit.') }}</p><p class="hint" role="status">{{ recoveryText || t('关闭', 'Off') }}</p></section>
     <section class="card"><h2>{{ t('窗口与后台运行', 'Window & background') }}</h2><p>{{ t('关闭窗口后，启动器留在菜单栏或系统托盘。点击图标，选择“打开主窗口”可再次打开；选择“退出”可完全退出。', 'Closing the window keeps the launcher in the menu bar or system tray. Choose Open window to return, or Quit to exit.') }}</p><p>{{ t('macOS 关闭窗口后隐藏 Dock 图标，重新打开窗口时恢复。退出启动器不会关闭已启动的 Antigravity。', 'On macOS, closing the window hides its Dock icon; reopening restores it. Quitting the launcher leaves Antigravity running.') }}</p></section>
    </div>
    <div v-else class="page help">
@@ -196,4 +255,8 @@ async function run(action: 'validate' | 'probe' | 'launch') {
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-synthesis:none;text-rendering:optimizeLegibility;font-size:13px}*{box-sizing:border-box}html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.4}button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.app{--bg:#fff;--panel:#fff;--text:#273344;--muted:#7b8695;--border:#e6ebf2;--accent:#527bec;--soft:#eff4ff;height:100%;display:grid;grid-template-rows:40px 38px minmax(0,1fr) 20px;gap:14px;background:var(--bg);color:var(--text);padding:20px 32px 12px}.app[data-theme=dark]{--bg:#1b201d;--panel:#232a25;--text:#e7ece6;--muted:#9ca89f;--border:#343e36;--accent:#a0cbae;--soft:#29372d;color-scheme:dark}@media(prefers-color-scheme:dark){.app[data-theme=system]{--bg:#1b201d;--panel:#232a25;--text:#e7ece6;--muted:#9ca89f;--border:#343e36;--accent:#a0cbae;--soft:#29372d;color-scheme:dark}}header{display:flex;align-items:center;gap:10px}header img{width:36px;height:36px}header strong{font-size:15px;letter-spacing:-.3px}header strong span{font-weight:400;color:var(--muted);margin-left:3px}nav{display:flex;gap:24px;border-bottom:1px solid var(--border)}nav button{background:none;border:0;border-bottom:2px solid transparent;padding:0 1px 9px;color:var(--muted)}nav button.selected{color:var(--text);border-bottom-color:var(--accent)}main{width:100%;max-width:760px;min-height:0;margin:0 auto}.page{height:100%;min-height:0}h1{font-size:20px;font-weight:600;letter-spacing:-.4px;margin:0 0 16px}h2{font-size:13px;font-weight:600;margin:0}p{line-height:1.6;color:var(--muted);margin:8px 0 0;overflow-wrap:anywhere}.home{display:flex;flex-direction:column}.home h1{margin-bottom:12px}fieldset{border:0;padding:0;margin:0;display:grid;gap:12px}.card{border:1px solid var(--border);background:var(--panel);border-radius:9px;padding:16px 18px}.card-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.card-heading span{font-size:11px;color:var(--muted)}.input-row{display:flex;gap:10px}.input-row input{flex:1}input,select{min-width:0;width:100%;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:6px;height:36px;padding:0 10px}input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}label{display:block;color:var(--muted);font-size:11px;margin-bottom:6px}.secondary{color:var(--text);border:1px solid var(--border);background:var(--panel);border-radius:6px;height:36px;padding:0 16px;white-space:nowrap}.proxy-fields{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:10px;align-items:end}.hint{font-size:11px;margin-top:8px}.launch-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:14px}.launch-row span{font-size:11px;color:var(--muted)}.primary{border:0;background:#527bec;color:#fff;padding:0 28px;height:40px;border-radius:7px;font-weight:500}.status{display:flex;align-items:center;gap:10px;min-height:58px;margin-top:auto;padding-top:8px}.status p{font-size:12px;margin:0}.status.success p{color:var(--accent)}.status.error p{color:#bf6655}.spinner{width:12px;height:12px;flex-shrink:0;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}footer{display:flex;align-items:end;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px;border-top:1px solid var(--border);padding-top:7px}.page-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.page-heading h1{margin:0}.page-heading>span{font-size:11px;color:var(--muted)}.history{display:flex;flex-direction:column}.empty{margin:auto;color:var(--muted)}.log-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}.log-list li{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 16px}.log-list time{font-size:10px;color:var(--muted)}.log-list p{color:var(--text);font-size:12px;margin-top:5px}.pagination{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:auto;padding-top:12px}.pagination span{font-size:11px;color:var(--muted)}.pagination button{height:30px;font-size:11px}.preferences{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:14px}.settings .card>p{font-size:12px;margin-top:12px}.segments{display:flex;padding:3px;background:var(--border);border-radius:7px;gap:3px}.segments button{background:transparent;color:var(--muted);border:0;border-radius:5px;font-size:11px;padding:6px 10px}.segments .chosen{background:var(--panel);color:var(--text)}.instructions{display:grid;gap:22px;padding:22px}.instructions>div{display:flex;gap:14px}.instructions b{font-size:11px;flex-shrink:0;width:24px;height:24px;display:grid;place-items:center;background:var(--soft);color:var(--accent);border-radius:50%;font-weight:500}.help p{font-size:12px;margin-top:6px}.faq{display:grid;gap:17px;padding:20px}.help h2{line-height:1.5}@media(max-height:660px){.app{padding-top:14px;gap:10px;grid-template-rows:36px 34px minmax(0,1fr) 20px}.card{padding:12px 16px}.home h1{font-size:18px;margin-bottom:10px}.card-heading{margin-bottom:8px}.status{min-height:52px}.instructions{gap:18px;padding:18px}.faq{gap:13px;padding:17px}}
 .version{margin-left:auto;white-space:nowrap}.save-feedback{display:flex;align-items:center;gap:8px}.save-error{color:#bf6655}.save-feedback button{border:0;background:transparent;color:inherit;text-decoration:underline;padding:0;font-size:10px}
+</style>
+
+<style>
+.recovery-card{margin-bottom:14px}.switch-row{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:13px;color:var(--text);margin:0}.switch-row input{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}.recovery-card .hint{font-size:11px}.launch-row>span{max-width:60%}
 </style>

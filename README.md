@@ -3,7 +3,7 @@
   <h1>Antigravity Launcher Lite</h1>
   <p>为 Antigravity 桌面客户端配置代理、检测连接并启动。</p>
   <p>
-    <img src="https://img.shields.io/badge/version-1.0.0-527bec" alt="版本 1.0.0" />
+    <img src="https://img.shields.io/badge/version-1.0.1-527bec" alt="版本 1.0.1" />
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a>
     <a href="https://github.com/Alisonispig/antigravity-launcher-lite/actions/workflows/verify.yml"><img src="https://github.com/Alisonispig/antigravity-launcher-lite/actions/workflows/verify.yml/badge.svg" alt="构建验证" /></a>
   </p>
@@ -31,6 +31,7 @@ Antigravity Launcher Lite 是一个独立的 Antigravity 代理启动工具。�
 - **手动配置客户端**：填写安装路径并验证；macOS 支持解析 `.app` 中的实际可执行文件。
 - **检测代理连接**：支持无需账号密码的 HTTP 代理及提供 HTTP CONNECT 能力的混合端口，检查代理握手和 HTTPS 连接。
 - **检测并启动**：启动前重新验证路径与连接，识别已有实例，并观察启动后的早期退出。
+- **更新后恢复代理**：在设置中开启后，跟踪本次由启动器打开的客户端；识别更新重启，请求正常退出后使用原代理重新打开，不强制结束进程。
 - **自动保存配置**：记住客户端路径、代理地址、端口、语言和主题，下次打开自动恢复。
 - **菜单栏与托盘**：关闭窗口后保留后台入口；macOS 同时隐藏 Dock 图标，可从菜单栏恢复窗口或退出。
 - **中文、英文与明暗主题**：支持浅色、深色及跟随系统，macOS 原生标题栏与页面配色同步。
@@ -40,18 +41,18 @@ Antigravity Launcher Lite 是一个独立的 Antigravity 代理启动工具。�
 
 ## 下载与平台支持
 
-下载入口：[1.0.0 正式版](https://github.com/Alisonispig/antigravity-launcher-lite/releases/tag/v1.0.0)。
+下载入口：[最新正式版](https://github.com/Alisonispig/antigravity-launcher-lite/releases/latest)。
 
-**1.0.0 已正式发布，多个平台的使用测试已由维护者确认通过。** 按下面的系统和架构选择安装包；如需自行修改或构建，也可以使用下方的源码运行方式。
+1.0.1 新增客户端更新后自动恢复代理。各架构的构建与验证范围见发布说明。 按下面的系统和架构选择安装包；如需自行修改或构建，也可以使用下方的源码运行方式。
 
 | 平台 | 下载文件 | 验证范围 |
 | --- | --- | --- |
-| macOS · Apple Silicon | `macos-arm64.dmg` / `macos-arm64.app.zip` | CI 原生打包与启动检查，并在本机打开安装包验证窗口与配置恢复 |
-| macOS · Intel | `macos-x64.dmg` / `macos-x64.app.zip` | CI 原生打包与启动检查；维护者确认设备测试通过 |
-| Windows · x64 | `windows-x64-setup.exe` | CI 安装与启动检查；维护者确认设备测试通过 |
-| Linux · x86_64 | `linux-x64.deb` / `linux-x64.AppImage` | CI 包结构与启动检查；维护者确认设备测试通过 |
+| macOS · Apple Silicon | `macos-arm64.dmg` / `macos-arm64.app.zip` | CI 原生打包与启动检查；macOS 正常退出/拒绝退出辅助程序测试 |
+| macOS · Intel | `macos-x64.dmg` / `macos-x64.app.zip` | CI 原生打包与启动检查 |
+| Windows · x64 | `windows-x64-setup.exe` | CI 安装与启动检查 |
+| Linux · x86_64 | `linux-x64.deb` / `linux-x64.AppImage` | CI 包结构与启动检查 |
 
-文件名均带有 `Antigravity-Launcher-Lite_1.0.0_` 前缀。Mac 打开 DMG 后将应用拖入 Applications；Windows 运行安装器，默认安装到当前用户；Linux 按发行版选择 deb 或 AppImage。
+文件名均带有 `Antigravity-Launcher-Lite_1.0.1_` 前缀。Mac 打开 DMG 后将应用拖入 Applications；Windows 运行安装器，默认安装到当前用户；Linux 按发行版选择 deb 或 AppImage。
 
 macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Windows 未做代码签名。系统可能出现安全提示，具体依赖、签名状态、校验值与使用限制见发布说明。CI 启动检查不等于真实设备上的完整使用验收。
 
@@ -86,7 +87,17 @@ macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Wi
 
 **检测通过与登录成功是两回事。** 当前检测目标为 `accounts.google.com`，成功仅表示经所选代理可以建立到该目标的 HTTPS 连接；它不能证明所有 Antigravity 服务都可访问，也不能排除账号、地区或服务端限制。启动器传入的是代理环境变量，并不保证客户端所有组件、所有流量都会采用该代理。
 
-### 4. 关闭与退出
+### 4. 客户端更新后恢复代理
+
+此功能从 1.0.1 开始提供，1.0.0 安装包不包含。
+
+在“设置”中开启 **更新后自动恢复代理**（默认关闭），再通过启动器打开 Antigravity。启动器会在后台跟踪这次客户端会话；安装文件内容发生变化、原进程退出且同一路径的新主进程稳定运行后，先检测原代理，再请求客户端正常退出，并带本次启动时的代理重新打开。
+
+如果出现未保存文件提示，请先保存或处理提示。客户端两分钟内仍未退出、代理不可用或进程无法确认时，自动恢复停止，请按界面提示处理；不会强制结束进程。普通退出、没有安装更新的重启不会触发恢复。关闭开关会取消尚未执行的恢复步骤；如果退出请求已经送达客户端，它仍可能随后退出。
+
+只有本次启动器会话中启动的客户端会被跟踪，完全退出启动器后不再监测。更新程序若更换安装路径，需要重新填写路径。Linux 仅尝试 X11/EWMH 窗口关闭；原生 Wayland、AppImage 挂载路径及不响应正常关闭请求的客户端尚不支持自动恢复。发现不了这些进程时会提示手动处理。
+
+### 5. 关闭与退出
 
 关闭窗口后，可通过菜单栏或系统托盘图标中的“打开主窗口”回到启动器。选择“退出”才会完全结束启动器。
 
@@ -123,7 +134,7 @@ macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Wi
 - 代理设置只传给本次启动的 Antigravity 子进程，不修改系统全局代理。
 - 不读取或导出 Antigravity 的 token、Cookie 或账号数据库。
 - 不修补 Antigravity 文件，不提供登录代办、账号切换或地区解锁服务。
-- 不自动提权，不自动结束用户应用，不关闭系统安全机制。
+- 不自动提权，不强制结束用户应用，不关闭系统安全机制。仅在用户开启更新后恢复代理时，请求匹配的客户端正常退出。
 - 配置保存在本机；当前无遥测，不上传配置或操作记录。
 
 连接检测会经你填写的代理访问检测目标，这是检查网络连通性所必需的请求。

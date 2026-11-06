@@ -7,6 +7,8 @@ fn main() {
             "load_config",
             "save_config",
             "set_window_theme",
+            "recovery_status",
+            "set_auto_restore_proxy",
         ]),
     ))
     .expect("构建 Tauri 权限清单失败");
