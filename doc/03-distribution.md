@@ -1,6 +1,6 @@
 # 打包、签名与发布
 
-## 1.0.0 发布矩阵
+## 1.0.1 发布矩阵
 
 | 平台 | 发布架构 | 已发布产物 | 用户侧要求 |
 | --- | --- | --- | --- |
@@ -51,7 +51,7 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk npm run tauri bu
 维护者通过 `打包发布` 工作流手动选择 main 与版本号：
 
 ```sh
-gh workflow run release.yml --ref main -f version=1.0.0
+gh workflow run release.yml --ref main -f version=1.0.1
 ```
 
 工作流在 macOS 15（arm64）、macOS 15 Intel、Windows Server 2022、Ubuntu 22.04 上分别构建原生安装包。各目标先运行核心测试，收集第三方依赖许可，再生成 DMG/应用 ZIP、当前用户 NSIS、deb/AppImage。生成的许可文件随包附带，Windows Python 显式使用 UTF-8 读取 Cargo 元数据。
@@ -61,3 +61,5 @@ gh workflow run release.yml --ref main -f version=1.0.0
 CI 中的短时进程观察不等于用户真实设备上的完整安装验收；缺少设备验收的平台始终标注预览。macOS 为 adhoc 本地签名，无 Developer ID 与苹果公证；Windows 未做 Authenticode 签名。
 
 1.0.0 已按上述流程公开，维护者确认多个平台测试通过后转为正式版并设为 Latest，构建与校验记录见 `04-roadmap.md`。GitHub Release 中的构建元数据是各文件对应提交和 SHA-256 的依据；主分支后续文档维护不改变已发布安装包对应的源码标签。
+
+1.0.1 于 2026-11-06 完成三平台常规验证与四架构原生打包，下载核对 SHA-256 后正式公开并设为 Latest。macOS 14 runner 已不可用，常规验证迁移到 macOS 15；实际构建提交、流水线与附件记录见 `04-roadmap.md`。

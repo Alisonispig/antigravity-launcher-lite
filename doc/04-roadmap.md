@@ -156,3 +156,14 @@ Windows WM_CLOSE 与 Linux X11 适配代码在独立最小工程中通过 API �
 发布前代码核对发现 Windows 的进程路径可能缺少 canonicalize 产生的长路径前缀，直接比较会漏认实例。现对观察到的 Windows 路径通过文件系统归一化，用于旧实例判断与更新跟踪，并增加 Windows 专用路径测试；对应 CI 结果后补。
 
 1.0.1 首轮验证中，GitHub 在执行代码前取消 macOS 14 任务，注解为 `The configuration macos-14-arm64-us-default is not supported`。验证矩阵已迁移到可用的 macOS 15；取消旧提交的流水线，修复提交后统一重跑常规验证与四架构打包，避免混合提交产物。
+
+## 1.0.1 正式版已发布（2026-11-06）
+
+- Release：https://github.com/Alisonispig/antigravity-launcher-lite/releases/tag/v1.0.1 。由草稿公开为正式版，移除 prerelease 标记并设为 Latest；GitHub latest API 已确认返回 v1.0.1。
+- 构建与标签提交：`ba9e565b7c9fd216623ead472803c28d9f90e86a`。公开后核对 v1.0.1 标签实际指向该提交；后续文档维护不改变安装包源码对应关系。
+- 三平台常规验证运行 `42144160123` 全部成功：macOS 15、Windows Server 2022、Ubuntu 22.04 的类型检查、fmt/Clippy、测试与桌面编译均通过；Windows 路径归一化测试也已通过。
+- 四架构发布运行 `42144167171` 全部成功：macOS arm64/x64、Windows x64、Linux x64 的核心测试、第三方许可生成、正式打包、版本/架构检查、安装/启动烟测及草稿汇总均成功。
+- 已发布 7 个安装包/应用 ZIP：两个 Mac 架构各有 DMG 和应用 ZIP，Windows NSIS 安装器，Linux deb/AppImage；另附 BUILD-METADATA.json 和 SHA256SUMS.txt，共 9 个附件。
+- 下载全部附件后，核对版本、四平台集合、构建提交、字节数、清单及 GitHub 资产 SHA-256，全数一致。额外解压两个 Mac 应用 ZIP，通过严格签名完整性检查、1.0.1 版本核对和 arm64/x86_64 架构核对。
+- 发布说明记录使用方法、默认关闭开关、正常退出等待与取消边界、Linux/安装路径限制、签名状态和真实客户端更新尚待验收；不将本次 CI 或辅助程序结果写成三平台真实更新端到端验收。
+- 旧 v1.0.0 标签和安装包保留，未覆盖。README 指向最新正式版，分发文档的版本与手动打包命令同步到 1.0.1。
