@@ -177,3 +177,13 @@ Windows WM_CLOSE 与 Linux X11 适配代码在独立最小工程中通过 API �
 ## 1.0.2 发布准备（2026-11-09）
 
 用户授权发布本次启动后关闭窗口功能，按补丁版本 1.0.2 提交 GitHub，沿用三平台常规验证与四架构原生打包。版本已统一到 npm、Tauri、Cargo 及锁文件，README 和发布说明同步更新；等待 CI 与附件校验通过后公开并设为 Latest，保留旧版本标签和附件。
+
+## 1.0.2 正式版已发布（2026-11-09）
+
+- Release：https://github.com/Alisonispig/antigravity-launcher-lite/releases/tag/v1.0.2 。已从草稿公开，取消 prerelease 标记并设为 Latest，GitHub latest API 返回 v1.0.2。
+- 源码和标签提交：`5e5a53b578f3c646e0b1e5cc6003702799f0e793`，公开后核对标签实际指向与安装包元数据一致。
+- 三平台常规验证运行 `42547385657` 全部成功，覆盖类型检查、fmt、Clippy、测试及桌面编译。
+- 发布运行 `42547388440` 的四个原生打包任务与草稿汇总任务全部成功；macOS arm64/x64、Windows x64、Linux x64 均完成核心测试、依赖许可生成、正式打包、版本/架构检查及安装/启动烟测。
+- 发布 7 个安装包/应用 ZIP 和 BUILD-METADATA.json、SHA256SUMS.txt，共 9 个附件。全部下载后，与文件清单、字节数、构建提交及 GitHub 资产 SHA-256 核对一致；两个 Mac 应用 ZIP 另通过严格签名完整性、1.0.2 版本与 arm64/x86_64 架构核对。
+- 本机 `/Applications/Antigravity Launcher Lite.app` 已同步替换为校验后的 macOS arm64 正式包并重新打开；原配置保留，旧副本保存在忽略目录 `release-assets/local-before-1.0.2.app`，未主动结束用户的 Antigravity。
+- 旧版本标签、安装包保留。发布说明包含默认开启、失败保留窗口、托盘恢复方法、验证范围、签名及已有更新恢复限制；不把 CI 启动检查或模拟 IPC 检查当作真实客户端启动后隐藏窗口的完整验收。
