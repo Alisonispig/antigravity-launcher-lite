@@ -43,7 +43,7 @@ dependencies = [
 
 [[package]]
 name = "antigravity-launcher-lite"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "objc2-app-kit",
  "plist",

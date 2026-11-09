@@ -18,6 +18,13 @@ async fn probe_proxy(
     let _guard = state.0.try_lock().map_err(|_| error("BUSY", "input"))?;
     core::proxy::probe(&proxy).await
 }
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LaunchResponse {
+    #[serde(flatten)]
+    result: core::launch::LaunchResult,
+    window_close_failed: bool,
+}
 #[tauri::command]
 async fn launch_antigravity(
     path: String,
@@ -25,7 +32,8 @@ async fn launch_antigravity(
     state: tauri::State<'_, Operation>,
     handle: tauri::AppHandle,
     recovery: tauri::State<'_, core::recovery::Recovery>,
-) -> Result<core::launch::LaunchResult> {
+    window_preference: tauri::State<'_, desktop::CloseAfterLaunch>,
+) -> Result<LaunchResponse> {
     let _guard = state.0.try_lock().map_err(|_| error("BUSY", "input"))?;
     let app = platform::validate(&path)?;
     core::launch::ensure_not_running(&app)?;
@@ -47,11 +55,17 @@ async fn launch_antigravity(
     if !result.early_exit
         && let Some(installation) = installation
     {
-        recovery.attach(handle, app, proxy, result.pid, installation);
+        recovery.attach(handle.clone(), app, proxy, result.pid, installation);
     } else {
-        recovery.unavailable(handle);
+        recovery.unavailable(handle.clone());
     }
-    Ok(result)
+    let window_close_failed = !result.early_exit
+        && window_preference.get()
+        && !desktop::hide_main(&handle).unwrap_or(false);
+    Ok(LaunchResponse {
+        result,
+        window_close_failed,
+    })
 }
 #[tauri::command]
 fn load_config(
@@ -64,6 +78,8 @@ fn load_config(
         .map_err(|_| error("CONFIG_READ_FAILED", "config"))?;
     let loaded = core::config::load(&core::config::config_path(&app)?)?;
     use tauri::Manager;
+    app.state::<desktop::CloseAfterLaunch>()
+        .set(loaded.config.close_after_launch);
     app.state::<core::recovery::Recovery>()
         .configure(app.clone(), loaded.config.auto_restore_proxy);
     Ok(loaded)
@@ -80,6 +96,8 @@ fn save_config(
         .lock()
         .map_err(|_| error("CONFIG_WRITE_FAILED", "config"))?;
     // 开关有独立保存入口，普通字段的迟到保存不能重新开启/关闭恢复。
+    use tauri::Manager;
+    config.close_after_launch = app.state::<desktop::CloseAfterLaunch>().get();
     config.auto_restore_proxy = recovery.status().enabled;
     core::config::save(&core::config::config_path(&app)?, &config)?;
     recovery.configure(app, config.auto_restore_proxy);
@@ -104,6 +122,24 @@ fn set_auto_restore_proxy(
     Ok(())
 }
 #[tauri::command]
+fn set_close_after_launch(
+    app: tauri::AppHandle,
+    store: tauri::State<'_, core::config::ConfigStore>,
+    preference: tauri::State<'_, desktop::CloseAfterLaunch>,
+    enabled: bool,
+) -> Result<()> {
+    let _guard = store
+        .0
+        .lock()
+        .map_err(|_| error("CONFIG_WRITE_FAILED", "config"))?;
+    let path = core::config::config_path(&app)?;
+    let mut loaded = core::config::load(&path)?;
+    loaded.config.close_after_launch = enabled;
+    core::config::save(&path, &loaded.config)?;
+    preference.set(enabled);
+    Ok(())
+}
+#[tauri::command]
 fn recovery_status(recovery: tauri::State<'_, core::recovery::Recovery>) -> core::recovery::Status {
     recovery.status()
 }
@@ -115,6 +151,7 @@ fn set_window_theme(app: tauri::AppHandle, theme: core::config::Theme) -> Result
 pub fn run() {
     tauri::Builder::default()
         .manage(Operation::default())
+        .manage(desktop::CloseAfterLaunch::default())
         .manage(core::recovery::Recovery::default())
         .manage(core::config::ConfigStore::default())
         .setup(|app| {
@@ -130,7 +167,8 @@ pub fn run() {
             save_config,
             set_window_theme,
             recovery_status,
-            set_auto_restore_proxy
+            set_auto_restore_proxy,
+            set_close_after_launch
         ])
         .build(tauri::generate_context!())
         .expect("运行启动器失败")

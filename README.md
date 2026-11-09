@@ -3,7 +3,7 @@
   <h1>Antigravity Launcher Lite</h1>
   <p>为 Antigravity 桌面客户端配置代理、检测连接并启动。</p>
   <p>
-    <img src="https://img.shields.io/badge/version-1.0.1-527bec" alt="版本 1.0.1" />
+    <img src="https://img.shields.io/badge/version-1.0.2-527bec" alt="版本 1.0.2" />
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a>
     <a href="https://github.com/Alisonispig/antigravity-launcher-lite/actions/workflows/verify.yml"><img src="https://github.com/Alisonispig/antigravity-launcher-lite/actions/workflows/verify.yml/badge.svg" alt="构建验证" /></a>
   </p>
@@ -43,7 +43,7 @@ Antigravity Launcher Lite 是一个独立的 Antigravity 代理启动工具。�
 
 下载入口：[最新正式版](https://github.com/Alisonispig/antigravity-launcher-lite/releases/latest)。
 
-1.0.1 新增客户端更新后自动恢复代理。各架构的构建与验证范围见发布说明。 按下面的系统和架构选择安装包；如需自行修改或构建，也可以使用下方的源码运行方式。
+1.0.2 新增启动成功后自动关闭启动器窗口，默认开启；保留 1.0.1 的更新后恢复代理功能。各架构的构建与验证范围见发布说明。 按下面的系统和架构选择安装包；如需自行修改或构建，也可以使用下方的源码运行方式。
 
 | 平台 | 下载文件 | 验证范围 |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ Antigravity Launcher Lite 是一个独立的 Antigravity 代理启动工具。�
 | Windows · x64 | `windows-x64-setup.exe` | CI 安装与启动检查 |
 | Linux · x86_64 | `linux-x64.deb` / `linux-x64.AppImage` | CI 包结构与启动检查 |
 
-文件名均带有 `Antigravity-Launcher-Lite_1.0.1_` 前缀。Mac 打开 DMG 后将应用拖入 Applications；Windows 运行安装器，默认安装到当前用户；Linux 按发行版选择 deb 或 AppImage。
+文件名均带有 `Antigravity-Launcher-Lite_1.0.2_` 前缀。Mac 打开 DMG 后将应用拖入 Applications；Windows 运行安装器，默认安装到当前用户；Linux 按发行版选择 deb 或 AppImage。
 
 macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Windows 未做代码签名。系统可能出现安全提示，具体依赖、签名状态、校验值与使用限制见发布说明。CI 启动检查不等于真实设备上的完整使用验收。
 
@@ -98,6 +98,8 @@ macOS 使用 adhoc 本地签名，未做 Developer ID 签名与苹果公证；Wi
 只有本次启动器会话中启动的客户端会被跟踪，完全退出启动器后不再监测。更新程序若更换安装路径，需要重新填写路径。Linux 仅尝试 X11/EWMH 窗口关闭；原生 Wayland、AppImage 挂载路径及不响应正常关闭请求的客户端尚不支持自动恢复。发现不了这些进程时会提示手动处理。
 
 ### 5. 关闭与退出
+
+1.0.2 新增“启动后关闭本应用窗口”设置，默认开启：点击“检测并启动”，客户端通过早期退出观察后，启动器会自动收起窗口；检测失败、已有实例或客户端早期退出时保持窗口打开。在设置中关闭此项可保留窗口，选择会自动保存。
 
 关闭窗口后，可通过菜单栏或系统托盘图标中的“打开主窗口”回到启动器。选择“退出”才会完全结束启动器。
 

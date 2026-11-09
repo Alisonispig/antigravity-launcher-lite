@@ -11,6 +11,8 @@ const host = ref('127.0.0.1');
 const port = ref(7890);
 const busy = ref(false);
 const autoRestoreProxy = ref(false);
+const closeAfterLaunch = ref(true);
+const changingCloseAfterLaunch = ref(false);
 const changingRestore = ref(false);
 const recovery = ref<{enabled: boolean; supported: boolean; phase: string; code: string | null; revision: number}>();
 let recoveryTimer: ReturnType<typeof setInterval> | undefined;
@@ -62,6 +64,18 @@ async function toggleRestore(event: Event) {
   record(t('设置未保存，请重试。', 'Could not save the setting. Please retry.'));
  } finally { changingRestore.value = false; }
 }
+async function toggleCloseAfterLaunch(event: Event) {
+ const enabled = (event.target as HTMLInputElement).checked;
+ changingCloseAfterLaunch.value = true;
+ try {
+  await invoke('set_close_after_launch', {enabled});
+  closeAfterLaunch.value = enabled;
+ } catch {
+  (event.target as HTMLInputElement).checked = closeAfterLaunch.value;
+  success.value = false;
+  record(t('设置未保存，请重试。', 'Could not save the setting. Please retry.'));
+ } finally { changingCloseAfterLaunch.value = false; }
+}
 onUnmounted(() => { if (recoveryTimer) clearInterval(recoveryTimer); });
 const message = ref('');
 const success = ref(false);
@@ -79,7 +93,7 @@ const saveState = ref<'idle' | 'saving' | 'saved' | 'failed' | 'invalid' | 'reco
 let saveRevision = 0;
 interface AppConfig {
  schemaVersion: number; clientPath: string; proxyHost: string; proxyPort: number;
- language: 'zh' | 'en' | null; theme: 'system' | 'light' | 'dark'; autoRestoreProxy: boolean;
+ language: 'zh' | 'en' | null; theme: 'system' | 'light' | 'dark'; autoRestoreProxy: boolean; closeAfterLaunch: boolean;
 }
 const saveLabel = computed(() => {
  switch (saveState.value) {
@@ -104,7 +118,7 @@ async function saveSettings() {
  }
  const config: AppConfig = {
   schemaVersion: 1, clientPath: path.value, proxyHost: host.value, proxyPort: port.value,
-  language: language.value, theme: theme.value as AppConfig['theme'], autoRestoreProxy: autoRestoreProxy.value,
+  language: language.value, theme: theme.value as AppConfig['theme'], autoRestoreProxy: autoRestoreProxy.value, closeAfterLaunch: closeAfterLaunch.value,
  };
  saveState.value = 'saving';
  try {
@@ -128,6 +142,7 @@ onMounted(async () => {
   if (loaded.config.language) language.value = loaded.config.language;
   theme.value = loaded.config.theme;
   autoRestoreProxy.value = loaded.config.autoRestoreProxy;
+  closeAfterLaunch.value = loaded.config.closeAfterLaunch;
   writableConfig.value = true;
   saveState.value = loaded.recovered ? 'recovered' : 'idle';
  } catch (error: unknown) {
@@ -182,9 +197,14 @@ async function run(action: 'validate' | 'probe' | 'launch') {
    const r = await invoke<{target: string; status: number; latencyMs: number}>('probe_proxy', {proxy});
    record(t(`连接成功 · ${r.target} · ${r.latencyMs} ms（HTTP ${r.status}）`, `Connected · ${r.target} · ${r.latencyMs} ms (HTTP ${r.status})`));
   } else {
-   const r = await invoke<{pid: number; earlyExit: boolean}>('launch_antigravity', {path: path.value, proxy});
+   const r = await invoke<{pid: number; earlyExit: boolean; windowCloseFailed: boolean}>('launch_antigravity', {path: path.value, proxy});
    if (r.earlyExit) {
     record(t('Antigravity 启动后很快退出。请检查是否已有实例，或尝试直接打开客户端。', 'Antigravity exited shortly after launch. Check for an existing instance, or try opening the client directly.'));
+    return;
+   }
+   if (r.windowCloseFailed) {
+    record(t('Antigravity 已启动，但启动器窗口未能收起。可手动关闭窗口。', 'Antigravity started, but the launcher window could not be hidden. You can close it manually.'));
+    success.value = true;
     return;
    }
    record(t('Antigravity 已启动。请在客户端中确认联网和登录。', 'Antigravity has started. Check connectivity and sign-in inside the client.'));
@@ -232,7 +252,7 @@ async function run(action: 'validate' | 'probe' | 'launch') {
     <h1>{{ t('设置', 'Settings') }}</h1>
     <section class="card preferences"><div><label for="lang">{{ t('语言', 'Language') }}</label><select id="lang" v-model="language" :disabled="loadingConfig"><option value="zh">简体中文</option><option value="en">English</option></select></div><div><label for="theme">{{ t('外观', 'Appearance') }}</label><select id="theme" v-model="theme" :disabled="loadingConfig"><option value="system">{{ t('跟随系统', 'System') }}</option><option value="light">{{ t('浅色', 'Light') }}</option><option value="dark">{{ t('深色', 'Dark') }}</option></select></div></section>
     <section class="card recovery-card"><label class="switch-row"><span>{{ t('更新后自动恢复代理', 'Restore proxy after client updates') }}</span><input type="checkbox" :checked="autoRestoreProxy" :disabled="loadingConfig || changingRestore || !writableConfig || (recovery?.supported === false && !autoRestoreProxy)" @change="toggleRestore" /></label><p>{{ t('仅跟踪由启动器打开的客户端。更新重启后请求正常退出，再用本次启动时的代理打开；如有保存提示，请先处理。不会强制结束进程。', 'Tracks clients launched here. After an update restarts the client, requests a normal quit and reopens it with the same proxy. Respond to save prompts; the app is never force-quit.') }}</p><p class="hint" role="status">{{ recoveryText || t('关闭', 'Off') }}</p></section>
-    <section class="card"><h2>{{ t('窗口与后台运行', 'Window & background') }}</h2><p>{{ t('关闭窗口后，启动器留在菜单栏或系统托盘。点击图标，选择“打开主窗口”可再次打开；选择“退出”可完全退出。', 'Closing the window keeps the launcher in the menu bar or system tray. Choose Open window to return, or Quit to exit.') }}</p><p>{{ t('macOS 关闭窗口后隐藏 Dock 图标，重新打开窗口时恢复。退出启动器不会关闭已启动的 Antigravity。', 'On macOS, closing the window hides its Dock icon; reopening restores it. Quitting the launcher leaves Antigravity running.') }}</p></section>
+    <section class="card window-card"><label class="switch-row"><span>{{ t('启动后关闭本应用窗口', 'Close launcher window after launch') }}</span><input type="checkbox" :checked="closeAfterLaunch" :disabled="loadingConfig || changingCloseAfterLaunch || !writableConfig" @change="toggleCloseAfterLaunch" /></label><p>{{ t('Antigravity 启动成功后自动收起此窗口，失败时保持打开。', 'Hide after Antigravity starts successfully. Keep open on failure.') }}</p><p>{{ t('从菜单栏或系统托盘可重新打开，选择“退出”才会结束启动器。', 'Reopen from the menu bar or system tray. Choose Quit to exit.') }}</p></section>
    </div>
    <div v-else class="page help">
     <div class="page-heading"><h1>{{ t('帮助', 'Help') }}</h1><div class="segments"><button :class="{chosen: helpTab === 'steps'}" @click="helpTab = 'steps'">{{ t('怎么用', 'Getting started') }}</button><button :class="{chosen: helpTab === 'faq'}" @click="helpTab = 'faq'">{{ t('常见问题', 'Troubleshooting') }}</button></div></div>

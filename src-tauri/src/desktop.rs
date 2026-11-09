@@ -1,3 +1,18 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+pub struct CloseAfterLaunch(AtomicBool);
+impl Default for CloseAfterLaunch {
+    fn default() -> Self {
+        Self(AtomicBool::new(true))
+    }
+}
+impl CloseAfterLaunch {
+    pub fn get(&self) -> bool {
+        self.0.load(Ordering::SeqCst)
+    }
+    pub fn set(&self, value: bool) {
+        self.0.store(value, Ordering::SeqCst);
+    }
+}
 use tauri::{
     AppHandle, Manager, WindowEvent,
     image::Image,
@@ -34,6 +49,22 @@ pub fn show_main(app: &AppHandle) -> tauri::Result<()> {
     window.show()?;
     window.unminimize()?;
     window.set_focus()
+}
+
+pub fn hide_main(app: &AppHandle) -> tauri::Result<bool> {
+    if app.tray_by_id("launcher-tray").is_none() {
+        return Ok(false);
+    }
+    let Some(window) = app.get_webview_window("main") else {
+        return Ok(false);
+    };
+    window.hide()?;
+    #[cfg(target_os = "macos")]
+    if let Err(error) = app.set_activation_policy(tauri::ActivationPolicy::Accessory) {
+        let _ = show_main(app);
+        return Err(error);
+    }
+    Ok(true)
 }
 
 pub fn setup(app: &mut tauri::App) -> tauri::Result<()> {
@@ -80,15 +111,6 @@ pub fn window_event(window: &tauri::Window, event: &WindowEvent) {
             return;
         }
         api.prevent_close();
-        if window.hide().is_ok() {
-            #[cfg(target_os = "macos")]
-            if window
-                .app_handle()
-                .set_activation_policy(tauri::ActivationPolicy::Accessory)
-                .is_err()
-            {
-                let _ = show_main(window.app_handle());
-            }
-        }
+        let _ = hide_main(window.app_handle());
     }
 }

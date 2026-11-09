@@ -34,6 +34,11 @@ pub struct AppConfig {
     pub theme: Theme,
     #[serde(default)]
     pub auto_restore_proxy: bool,
+    #[serde(default = "enabled_by_default")]
+    pub close_after_launch: bool,
+}
+fn enabled_by_default() -> bool {
+    true
 }
 impl Default for AppConfig {
     fn default() -> Self {
@@ -49,6 +54,7 @@ impl Default for AppConfig {
             language: None,
             theme: Theme::Light,
             auto_restore_proxy: false,
+            close_after_launch: true,
         }
     }
 }
@@ -223,6 +229,21 @@ mod tests {
         config.auto_restore_proxy = true;
         save(&path, &config).unwrap();
         assert!(load(&path).unwrap().config.auto_restore_proxy);
+    }
+    #[test]
+    fn close_after_launch_defaults_on_for_old_configs_and_remembers_opt_out() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        let mut value = serde_json::to_value(AppConfig::default()).unwrap();
+        value.as_object_mut().unwrap().remove("closeAfterLaunch");
+        fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+        let loaded = load(&path).unwrap();
+        assert!(!loaded.recovered);
+        let mut config = loaded.config;
+        assert!(config.close_after_launch);
+        config.close_after_launch = false;
+        save(&path, &config).unwrap();
+        assert!(!load(&path).unwrap().config.close_after_launch);
     }
     #[test]
     fn corrupt_config_is_preserved_and_recovered() {

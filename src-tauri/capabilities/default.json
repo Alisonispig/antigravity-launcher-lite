@@ -13,6 +13,7 @@
     "allow-save-config",
     "allow-set-window-theme",
     "allow-recovery-status",
-    "allow-set-auto-restore-proxy"
+    "allow-set-auto-restore-proxy",
+    "allow-set-close-after-launch"
   ]
 }

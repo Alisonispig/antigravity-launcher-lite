@@ -1,6 +1,6 @@
 [package]
 name = "antigravity-launcher-lite"
-version = "1.0.1"
+version = "1.0.2"
 description = "进程级 Antigravity 代理启动器"
 license = "MIT"
 authors = ["Antigravity Launcher Lite contributors"]

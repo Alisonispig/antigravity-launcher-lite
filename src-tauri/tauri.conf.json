@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Antigravity Launcher Lite",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "identifier": "io.github.antigravity-launcher-lite",
   "build": {
     "beforeDevCommand": "npm run dev",
