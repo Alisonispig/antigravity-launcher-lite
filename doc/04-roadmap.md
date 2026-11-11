@@ -4,6 +4,8 @@
 
 用户要求以后与 ThinkRail Launcher Lite 一起发布，采用统一版本号，两个项目各自通过常规 CI、四架构打包、安装/启动烟测及附件校验后同批次公开。本次 ThinkRail 首次安装包跟到已有的 1.0.2；Antigravity 已公开的 1.0.2 标签及附件保持不变。后续默认同时准备两个项目，基础功能、独立配置及签名密钥分别核对。流程见 [ThinkRail 配套发布说明](https://github.com/Alisonispig/thinkrail-launcher-lite/blob/main/doc/release-policy.md)。本次 Antigravity 只更新维护文档，未改程序或重新打包。
 
+ThinkRail 1.0.2 已完成三平台验证、四架构原生打包、安装/启动烟测和 16 个附件校验，正式发布并设为 Latest；macOS arm64 的应用内下载、安装及重启已通过真实启动器测试；该测试机未有落盘配置，已有配置文件的升级保留仍待验收。Antigravity 的文档提交 `68fbb96` 已通过三平台验证（运行 `42998737366`），原 1.0.2 发布不变。ThinkRail 已接入启动器自更新，Antigravity 当前 1.0.2 尚无该模块，后续配套发布时需核对基础功能同步，不能仅凭同版本号宣称功能一致。
+
 状态截至 2026-11-04：M0 工程与 M1 手动 HTTP 流程代码已建立，macOS arm64 前端构建、Rust 核心测试和 Clippy 通过；真实客户端流程和三平台验收尚未完成。
 
 ## M0：可运行工程
